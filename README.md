@@ -1,8 +1,8 @@
-# Winter Lights - Snow
+# Demoscene - Three.js - Snow
 
-[Winter Lights Visualization](http://macroz.github.io/snow/).
+[Live Demo](http://macroz.github.io/snow/).
 
-![Winter Lights](snow.png?raw=true)
+![Snow](snow.png?raw=true)
 
 ## License
 
