@@ -1,6 +1,6 @@
 # Demoscene - Three.js - Snow
 
-[Live Demo](http://macroz.github.io/snow/).
+[Live Demo](http://macroz.github.io/snow/)
 
 ![Snow](snow.png?raw=true)
 
