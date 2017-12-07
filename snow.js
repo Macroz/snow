@@ -66,8 +66,16 @@ function init() {
   clock = new THREE.Clock();
   clock.start();
 
+  cubeCamera1 = new THREE.CubeCamera(1, 10000, 2048);
+  cubeCamera1.renderTarget.texture.minFilter = THREE.LinearMipMapLinearFilter;
+  scene.add(cubeCamera1);
+
+  cubeCamera2 = new THREE.CubeCamera(1, 10000, 2048);
+  cubeCamera2.renderTarget.texture.minFilter = THREE.LinearMipMapLinearFilter;
+  scene.add(cubeCamera2);
+
   {
-    var s = 16;
+    var s = Math.min(windowHalfX, windowHalfY) * 0.03;
     var n = 16384;
     var spread = 1024.0;
     snow = createSnow(n, s, spread);
@@ -99,10 +107,36 @@ function init() {
   particles = new THREE.Points(bufferGeometry, shaderMaterial);
   scene.add(particles);
 
-  var baseColor = new THREE.Color(0, 140 / 255, 186 / 255);
+  var frostTexture = new THREE.TextureLoader().load('frost.png');
+  var frostColorTexture = new THREE.TextureLoader().load('frost_color.png');
+  var frostMetalnessTexture = new THREE.TextureLoader().load('frost_metalness.png');
+  var scale = 1.7;
+  frostTexture.wrapS = THREE.RepeatWrapping;
+  frostTexture.wrapT = THREE.RepeatWrapping;
+  frostTexture.repeat.set(scale, scale);
+  frostColorTexture.wrapS = THREE.RepeatWrapping;
+  frostColorTexture.wrapT = THREE.RepeatWrapping;
+  frostColorTexture.repeat.set(scale, scale);
+  frostMetalnessTexture.wrapS = THREE.RepeatWrapping;
+  frostMetalnessTexture.wrapT = THREE.RepeatWrapping;
+  frostMetalnessTexture.repeat.set(scale, scale);
+
+  //var baseColor = new THREE.Color(0, 140 / 255, 186 / 255);
+  var baseColor = new THREE.Color(80 / 255, 220 / 255, 255 / 255);
   var whiteColor = new THREE.Color(0.9, 0.9, 0.9);
-  metalMaterial = new THREE.MeshLambertMaterial({
-    color: whiteColor,
+  metalMaterial = new THREE.MeshStandardMaterial({
+    //color: baseColor,
+    emissive: whiteColor,
+    emissiveIntensity: 0.1,
+    //emissiveMap: frostTexture,
+    map: frostColorTexture,
+    //alphaMap: frostMetalnessTexture,
+    roughnessMap: frostTexture,
+    metalnessMap: frostMetalnessTexture,
+    envMap: cubeCamera2.renderTarget.texture,
+    refractionRatio: 0.97,
+    metalness: 0.9,
+    roughness: 0.1,
   });
 
   var objLoader = new THREE.OBJLoader();
@@ -121,11 +155,15 @@ function init() {
       scene.add(object);
     });
 
-  //var ambientlight = new THREE.AmbientLight(0xffffff, 0.2);
-  //scene.add(ambientlight);
+  //var sphereGeom = new THREE.SphereGeometry(100, 32, 32);
+  //var sphereMesh = new THREE.Mesh(sphereGeom, metalMaterial);
+  //scene.add(sphereMesh);
 
-  var pointLight = new THREE.PointLight(0xe0f0ff, 2.0, 10000);
-  pointLight.position.set(0, 200, 200);
+  var ambientlight = new THREE.AmbientLight(0xffffff, 0.1);
+  scene.add(ambientlight);
+
+  var pointLight = new THREE.PointLight(0xffffff, 2, 10000);
+  pointLight.position.set(0, 400, 120);
   scene.add(pointLight);
 
   renderer = new THREE.WebGLRenderer();
@@ -215,29 +253,49 @@ function animate() {
 
 function render() {
   var t = clock.getElapsedTime();
-  /*
-  if (logoMesh || textMesh) {
-    shaderMaterial.uniforms.uCameraPos.value = new THREE.Vector3(0, 0, 0);
-    var reflectionDistance = camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
-    if (textMesh) textMesh.visible = false;
-    if (logoMesh) logoMesh.visible = false;
 
+  if (logoMesh) {
+    logoMesh.visible = false;
     if (count % 2 === 0) {
       metalMaterial.envMap = cubeCamera1.renderTarget.texture;
-      shaderMaterial.uniforms.uReflection.value = reflectionDistance;
+      metalMaterial.envMap.mapping = THREE.CubeRefractionMapping;
+      shaderMaterial.uniforms.uReflection.value = 200.0;
+      cubeCamera2.position = logoMesh.position;
       cubeCamera2.update(renderer, scene);
     } else {
       metalMaterial.envMap = cubeCamera2.renderTarget.texture;
-      shaderMaterial.uniforms.uReflection.value = reflectionDistance;
+      metalMaterial.envMap.mapping = THREE.CubeRefractionMapping;
+      shaderMaterial.uniforms.uReflection.value = 200.0;
+      cubeCamera1.position = logoMesh.position;
       cubeCamera1.update(renderer, scene);
     }
-    ++count;
-
-    if (textMesh) textMesh.visible = true;
-    if (logoMesh) logoMesh.visible = true;
+    logoMesh.visible = true;
   }
+  ++count;
 
-  */
+  /*
+     if (logoMesh || textMesh) {
+     shaderMaterial.uniforms.uCameraPos.value = new THREE.Vector3(0, 0, 0);
+     var reflectionDistance = camera.position.distanceTo(new THREE.Vector3(0, 0, 0));
+     if (textMesh) textMesh.visible = false;
+     if (logoMesh) logoMesh.visible = false;
+
+     if (count % 2 === 0) {
+     metalMaterial.envMap = cubeCamera1.renderTarget.texture;
+     shaderMaterial.uniforms.uReflection.value = reflectionDistance;
+     cubeCamera2.update(renderer, scene);
+     } else {
+     metalMaterial.envMap = cubeCamera2.renderTarget.texture;
+     shaderMaterial.uniforms.uReflection.value = reflectionDistance;
+     cubeCamera1.update(renderer, scene);
+     }
+     ++count;
+
+     if (textMesh) textMesh.visible = true;
+     if (logoMesh) logoMesh.visible = true;
+     }
+
+   */
   shaderMaterial.uniforms.uCameraPos.value = camera.position;
   shaderMaterial.uniforms.uReflection.value = 0.0;
   shaderMaterial.uniforms.uTime.value = t;
